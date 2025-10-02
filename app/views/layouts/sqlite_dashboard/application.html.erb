@@ -209,6 +209,28 @@
         font-size: 0.875rem;
       }
 
+      .export-controls {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 1rem;
+      }
+
+      .btn-success {
+        background-color: #16a34a;
+        border-color: #16a34a;
+        color: white;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .btn-success:hover {
+        background-color: #15803d;
+        border-color: #15803d;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
+
       .pagination-controls {
         display: flex;
         justify-content: space-between;
@@ -518,6 +540,11 @@
             const pageRows = this.allData.rows.slice(startIndex, endIndex)
 
             let html = `
+              <div class="export-controls">
+                <button class="btn btn-sm btn-success" onclick="window.queryController.showExportModal()">
+                  <i class="fas fa-download"></i> Export to CSV
+                </button>
+              </div>
               <div class="pagination-controls">
                 <div class="rows-per-page">
                   <label for="rows-per-page">Rows per page:</label>
@@ -644,6 +671,97 @@
             this.queryInputTarget.value = ""
             this.queryInputTarget.focus()
           }
+        }
+
+        showExportModal() {
+          const existingModal = document.getElementById('export-modal')
+          if (existingModal) {
+            existingModal.remove()
+          }
+
+          const modalHtml = `
+            <div class="modal fade" id="export-modal" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Export to CSV</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label for="csv-separator" class="form-label">Separator</label>
+                      <select id="csv-separator" class="form-select">
+                        <option value=",">Comma (,)</option>
+                        <option value=";">Semicolon (;)</option>
+                        <option value="\t">Tab</option>
+                        <option value="|">Pipe (|)</option>
+                      </select>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="csv-headers" checked>
+                      <label class="form-check-label" for="csv-headers">
+                        Include headers as first row
+                      </label>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="window.queryController.exportCSV()">
+                      <i class="fas fa-download"></i> Download CSV
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `
+
+          document.body.insertAdjacentHTML('beforeend', modalHtml)
+          const modal = new bootstrap.Modal(document.getElementById('export-modal'))
+          modal.show()
+        }
+
+        exportCSV() {
+          const separator = document.getElementById('csv-separator').value
+          const includeHeaders = document.getElementById('csv-headers').checked
+          const query = this.editor ? this.editor.getValue() : this.queryInputTarget.value
+          const form = this.element
+          const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+
+          const formData = new FormData()
+          formData.append('query', query)
+          formData.append('separator', separator)
+          formData.append('include_headers', includeHeaders)
+
+          fetch(form.action.replace('/execute_query', '/export_csv'), {
+            method: 'POST',
+            body: formData,
+            headers: {
+              'X-CSRF-Token': csrfToken
+            }
+          })
+          .then(response => {
+            if (!response.ok) {
+              return response.json().then(err => { throw new Error(err.error || 'Export failed') })
+            }
+            return response.blob()
+          })
+          .then(blob => {
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `export_${new Date().getTime()}.csv`
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(url)
+            a.remove()
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('export-modal'))
+            if (modal) modal.hide()
+          })
+          .catch(error => {
+            alert('Export error: ' + error.message)
+          })
         }
       }
 

@@ -1,8 +1,9 @@
 require 'sqlite3'
+require 'csv'
 
 module SqliteDashboard
   class DatabasesController < ApplicationController
-    before_action :set_database, only: [:show, :execute_query, :tables, :table_schema]
+    before_action :set_database, only: [:show, :execute_query, :export_csv, :tables, :table_schema]
 
     def index
       @databases = SqliteDashboard.configuration.databases
@@ -64,6 +65,54 @@ module SqliteDashboard
       table_name = params[:table_name]
       schema = fetch_table_schema(table_name)
       render json: schema
+    end
+
+    def export_csv
+      query = params[:query]
+      separator = params[:separator] || ','
+      include_headers = params[:include_headers] == 'true'
+
+      begin
+        # Always forbid DROP and ALTER operations
+        if contains_destructive_ddl?(query)
+          render json: { error: "DROP and ALTER operations are forbidden for safety reasons." }, status: :unprocessable_entity
+          return
+        end
+
+        # Check for DML operations if allow_dml is false
+        unless SqliteDashboard.configuration.allow_dml
+          if contains_dml?(query)
+            render json: { error: "DML operations (INSERT, UPDATE, DELETE, CREATE, TRUNCATE) are not allowed." }, status: :unprocessable_entity
+            return
+          end
+        end
+
+        database_connection.results_as_hash = true
+        results = database_connection.execute(query)
+
+        if results.empty?
+          render json: { error: "No data to export" }, status: :unprocessable_entity
+          return
+        end
+
+        # Generate CSV
+        csv_data = CSV.generate(col_sep: separator) do |csv|
+          columns = results.first.keys
+          csv << columns if include_headers
+
+          results.each do |row|
+            csv << row.values
+          end
+        end
+
+        # Send as download
+        send_data csv_data,
+                  filename: "export_#{Time.now.strftime('%Y%m%d_%H%M%S')}.csv",
+                  type: 'text/csv',
+                  disposition: 'attachment'
+      rescue => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
     end
 
     private

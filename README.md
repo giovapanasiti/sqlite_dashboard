@@ -167,16 +167,134 @@ Override styles by creating `app/assets/stylesheets/sqlite_dashboard_overrides.c
 
 ### Configuration Options
 
+The `SqliteDashboard.configure` block accepts the following configuration options:
+
+#### `db_files`
+
+**Type:** `Array<Hash>`
+**Default:** `[]` (automatically loads from `config/database.yml` if empty)
+**Required:** No
+
+Specifies the SQLite database files to make available in the dashboard. Each database should be defined as a hash with `:name` and `:path` keys.
+
 ```ruby
 SqliteDashboard.configure do |config|
-  # Database files
-  config.db_files = []
+  config.db_files = [
+    {
+      name: "Development Database",
+      path: Rails.root.join("storage", "development.sqlite3").to_s
+    },
+    {
+      name: "Cache Database",
+      path: Rails.root.join("storage", "cache.sqlite3").to_s
+    },
+    {
+      name: "Custom Database",
+      path: "/absolute/path/to/database.sqlite3"
+    }
+  ]
+end
+```
 
-  # Future options (v2.0):
-  # config.readonly = true
-  # config.max_results = 10000
-  # config.enable_export = true
-  # config.theme = :dark
+**Automatic Database Discovery:**
+If `db_files` is empty (default), the gem will automatically discover SQLite databases from your `config/database.yml` file for the current Rails environment. This works for both single and multiple database configurations (Rails 6+).
+
+#### `add_database` Helper Method
+
+**Type:** `Method`
+**Parameters:** `name` (String), `path` (String)
+
+A convenience method to add databases one at a time instead of assigning the entire array:
+
+```ruby
+SqliteDashboard.configure do |config|
+  config.add_database("Development", Rails.root.join("db/development.sqlite3").to_s)
+  config.add_database("Test", Rails.root.join("db/test.sqlite3").to_s)
+  config.add_database("Analytics", "/var/data/analytics.sqlite3")
+end
+```
+
+#### `allow_dml`
+
+**Type:** `Boolean`
+**Default:** `false`
+**Recommended:** `false` (read-only)
+
+Controls whether Data Manipulation Language (DML) statements are allowed. When `false`, only SELECT queries are permitted, preventing accidental data modification.
+
+```ruby
+SqliteDashboard.configure do |config|
+  # Read-only mode (recommended for production-like environments)
+  config.allow_dml = false
+
+  # Or allow write operations (USE WITH CAUTION)
+  # config.allow_dml = true
+
+  config.db_files = [
+    { name: "My Database", path: "db/production.sqlite3" }
+  ]
+end
+```
+
+**⚠️ Security Warning:** Enabling `allow_dml = true` permits INSERT, UPDATE, DELETE, and other write operations. Only enable this in trusted, development-only environments.
+
+### Complete Configuration Example
+
+```ruby
+# config/initializers/sqlite_dashboard.rb
+SqliteDashboard.configure do |config|
+  # Option 1: Explicitly define databases
+  config.db_files = [
+    {
+      name: "Primary Database",
+      path: Rails.root.join("storage", "development.sqlite3").to_s
+    },
+    {
+      name: "Background Jobs",
+      path: Rails.root.join("storage", "jobs.sqlite3").to_s
+    }
+  ]
+
+  # Option 2: Or use the helper method
+  # config.add_database("Development", Rails.root.join("db/development.sqlite3").to_s)
+  # config.add_database("Test", Rails.root.join("db/test.sqlite3").to_s)
+
+  # Option 3: Or leave empty to auto-discover from database.yml
+  # config.db_files = [] # (default)
+
+  # Security: Disable write operations (recommended)
+  config.allow_dml = false
+end
+```
+
+### Environment-Specific Configuration
+
+You can conditionally configure databases based on the Rails environment:
+
+```ruby
+SqliteDashboard.configure do |config|
+  case Rails.env
+  when 'development'
+    config.db_files = [
+      { name: "Dev DB", path: Rails.root.join("storage/development.sqlite3").to_s },
+      { name: "Test DB", path: Rails.root.join("storage/test.sqlite3").to_s }
+    ]
+    config.allow_dml = true  # Allow writes in development
+
+  when 'staging'
+    config.db_files = [
+      { name: "Staging DB (Read-Only)", path: Rails.root.join("db/staging.sqlite3").to_s }
+    ]
+    config.allow_dml = false  # Read-only in staging
+
+  when 'production'
+    # Generally not recommended to use in production
+    # But if you must, make it read-only
+    config.db_files = [
+      { name: "Production DB", path: Rails.root.join("db/production.sqlite3").to_s }
+    ]
+    config.allow_dml = false
+  end
 end
 ```
 

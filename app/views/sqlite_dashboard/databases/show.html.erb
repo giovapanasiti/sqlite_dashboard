@@ -7,7 +7,7 @@
       </h6>
       <%= link_to "← Back to Databases", databases_path, class: "btn btn-sm btn-outline-secondary mb-3" %>
 
-      <h6 class="text-muted mb-2">Tables</h6>
+      <h6 class="mb-2">Tables</h6>
       <ul class="table-sidebar" data-controller="table-selector">
         <% @tables.each do |table| %>
           <li data-action="click->table-selector#selectTable"

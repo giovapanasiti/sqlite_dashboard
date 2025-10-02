@@ -5,6 +5,7 @@ SqliteDashboard::Engine.routes.draw do
     member do
       post :execute_query
       post :export_csv
+      post :export_json
       get :tables
       get :table_schema
     end

@@ -1,9 +1,10 @@
 require 'sqlite3'
 require 'csv'
+require 'json'
 
 module SqliteDashboard
   class DatabasesController < ApplicationController
-    before_action :set_database, only: [:show, :execute_query, :export_csv, :tables, :table_schema]
+    before_action :set_database, only: [:show, :execute_query, :export_csv, :export_json, :tables, :table_schema]
 
     def index
       @databases = SqliteDashboard.configuration.databases
@@ -109,6 +110,56 @@ module SqliteDashboard
         send_data csv_data,
                   filename: "export_#{Time.now.strftime('%Y%m%d_%H%M%S')}.csv",
                   type: 'text/csv',
+                  disposition: 'attachment'
+      rescue => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      end
+    end
+
+    def export_json
+      query = params[:query]
+      format_type = params[:format] || 'array' # 'array' or 'object'
+      pretty_print = params[:pretty_print] == 'true'
+
+      begin
+        # Always forbid DROP and ALTER operations
+        if contains_destructive_ddl?(query)
+          render json: { error: "DROP and ALTER operations are forbidden for safety reasons." }, status: :unprocessable_entity
+          return
+        end
+
+        # Check for DML operations if allow_dml is false
+        unless SqliteDashboard.configuration.allow_dml
+          if contains_dml?(query)
+            render json: { error: "DML operations (INSERT, UPDATE, DELETE, CREATE, TRUNCATE) are not allowed." }, status: :unprocessable_entity
+            return
+          end
+        end
+
+        database_connection.results_as_hash = true
+        results = database_connection.execute(query)
+
+        if results.empty?
+          render json: { error: "No data to export" }, status: :unprocessable_entity
+          return
+        end
+
+        # Generate JSON
+        json_data = if format_type == 'object'
+          # Format: { "columns": [...], "rows": [...] }
+          columns = results.first.keys
+          rows = results.map(&:values)
+          data = { columns: columns, rows: rows }
+          pretty_print ? JSON.pretty_generate(data) : data.to_json
+        else
+          # Format: array of objects
+          pretty_print ? JSON.pretty_generate(results) : results.to_json
+        end
+
+        # Send as download
+        send_data json_data,
+                  filename: "export_#{Time.now.strftime('%Y%m%d_%H%M%S')}.json",
+                  type: 'application/json',
                   disposition: 'attachment'
       rescue => e
         render json: { error: e.message }, status: :unprocessable_entity

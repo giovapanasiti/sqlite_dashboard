@@ -326,15 +326,10 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/yourus
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### Running Tests
-
-```bash
-bundle exec rspec
-```
 
 ## Roadmap
 
-- [ ] **v1.1** - Export results to CSV/JSON
+- [x] **v1.1** - Export results to CSV/JSON
 - [ ] **v1.2** - Query history and saved queries
 - [ ] **v1.3** - Database schema visualization
 - [ ] **v2.0** - Read-only mode enforcement

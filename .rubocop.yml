@@ -1,0 +1,31 @@
+AllCops:
+  TargetRubyVersion: 3.0
+  NewCops: enable
+  Exclude:
+    - 'bin/**/*'
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+
+# Disable some cops that don't work well with Rails engines
+Rails/FilePath:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Metrics/BlockLength:
+  Exclude:
+    - 'sqlite_dashboard.gemspec'
+    - 'Rakefile'
+    - 'lib/generators/**/*'
+
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'sqlite_dashboard.gemspec'
+
+Metrics/MethodLength:
+  Max: 15
+
+Metrics/ClassLength:
+  Max: 150

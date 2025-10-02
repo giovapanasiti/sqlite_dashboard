@@ -1,0 +1,60 @@
+<div class="row g-0" style="height: 100vh;">
+  <!-- Sidebar with tables -->
+  <div class="col-md-2 sidebar">
+    <div class="p-3">
+      <h6 class="mb-3">
+        <i class="fas fa-database"></i> <%= @database[:name] %>
+      </h6>
+      <%= link_to "← Back to Databases", databases_path, class: "btn btn-sm btn-outline-secondary mb-3" %>
+
+      <h6 class="text-muted mb-2">Tables</h6>
+      <ul class="table-sidebar" data-controller="table-selector">
+        <% @tables.each do |table| %>
+          <li data-action="click->table-selector#selectTable"
+              data-table-name="<%= table %>"
+              data-table-selector-target="tableItem">
+            <i class="fas fa-table"></i> <%= table %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Main content area -->
+  <div class="col-md-10 main-content">
+    <!-- Query Console -->
+    <div class="query-console">
+      <%= form_with url: execute_query_database_path(@database[:id]),
+                    method: :post,
+                    data: {
+                      controller: "query-executor",
+                      action: "submit->query-executor#execute"
+                    } do |form| %>
+        <div class="mb-3">
+          <label for="query" class="form-label fw-bold">SQL Query</label>
+          <textarea name="query"
+                    id="query"
+                    class="form-control query-textarea"
+                    data-query-executor-target="queryInput"
+                    placeholder="Enter your SQL query here..."><%= params[:query] || "SELECT * FROM sqlite_master WHERE type='table';" %></textarea>
+        </div>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-play"></i> Execute Query
+          </button>
+          <button type="button" class="btn btn-outline-secondary" data-action="click->query-executor#clear">
+            <i class="fas fa-eraser"></i> Clear
+          </button>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Results Container -->
+    <div class="results-container" id="query-results">
+      <div class="text-muted text-center py-5">
+        <i class="fas fa-database fa-3x mb-3"></i>
+        <p>Execute a query to see results</p>
+      </div>
+    </div>
+  </div>
+</div>

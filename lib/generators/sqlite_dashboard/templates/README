@@ -1,0 +1,51 @@
+===============================================================================
+
+SQLite Dashboard has been installed successfully!
+
+Next Steps:
+-----------
+
+1. Review the configuration in:
+   config/initializers/sqlite_dashboard.rb
+
+2. Update the database paths to match your SQLite files
+
+3. Start your Rails server:
+   rails server
+
+4. Visit the dashboard at:
+   http://localhost:3000/sqlite_dashboard
+
+Security Warning:
+-----------------
+SQLite Dashboard provides direct SQL access to your databases.
+
+For production or shared environments, add authentication:
+
+In config/routes.rb, replace the mount line with:
+
+  authenticate :user, ->(user) { user.admin? } do
+    mount SqliteDashboard::Engine => "/sqlite_dashboard"
+  end
+
+Or use HTTP Basic Auth by adding to the initializer:
+
+  SqliteDashboard::Engine.middleware.use Rack::Auth::Basic do |user, pass|
+    user == ENV['DASHBOARD_USER'] && pass == ENV['DASHBOARD_PASS']
+  end
+
+Features:
+---------
+✨ SQL syntax highlighting with autocomplete
+📊 Paginated query results
+🔍 Quick table browsing
+⌨️  Keyboard shortcuts (Ctrl/Cmd + Enter to execute)
+📱 Responsive design
+
+Documentation:
+--------------
+https://github.com/sqlite-dashboard/sqlite_dashboard
+
+Enjoy exploring your SQLite databases! 🎉
+
+===============================================================================

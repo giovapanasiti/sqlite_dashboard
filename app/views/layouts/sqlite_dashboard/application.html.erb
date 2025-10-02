@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>SQLite Dashboard</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/monokai.min.css">
+
+    <style>
+      :root {
+        --primary-color: #2563eb;
+        --primary-hover: #1d4ed8;
+        --sidebar-bg: #1e293b;
+        --sidebar-text: #e2e8f0;
+        --sidebar-hover: #334155;
+        --main-bg: #f8fafc;
+        --card-bg: #ffffff;
+        --border-color: #e2e8f0;
+        --text-primary: #0f172a;
+        --text-secondary: #64748b;
+        --success-bg: #dcfce7;
+        --success-border: #86efac;
+        --success-text: #166534;
+        --error-bg: #fee2e2;
+        --error-border: #fca5a5;
+        --error-text: #991b1b;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: var(--main-bg);
+        color: var(--text-primary);
+      }
+
+      .sqlite-dashboard-container {
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .sidebar {
+        background-color: var(--sidebar-bg);
+        border-right: 2px solid #334155;
+        height: 100vh;
+        overflow-y: auto;
+        box-shadow: var(--shadow-lg);
+      }
+
+      .sidebar h6 {
+        color: var(--sidebar-text);
+        font-weight: 600;
+        letter-spacing: 0.025em;
+      }
+
+      .sidebar .btn-outline-secondary {
+        color: var(--sidebar-text);
+        border-color: #475569;
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+        transition: all 0.2s ease;
+      }
+
+      .sidebar .btn-outline-secondary:hover {
+        background-color: var(--sidebar-hover);
+        border-color: #64748b;
+        color: #f1f5f9;
+        transform: translateX(-2px);
+      }
+
+      .main-content {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--main-bg);
+      }
+
+      .query-console {
+        background-color: var(--card-bg);
+        border-bottom: 2px solid var(--border-color);
+        padding: 1.5rem;
+        flex-shrink: 0;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .query-console .form-label {
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.75rem;
+      }
+
+      .query-textarea {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+        font-size: 13px;
+        min-height: 120px;
+      }
+
+      .CodeMirror {
+        border: 2px solid var(--border-color);
+        border-radius: 0.5rem;
+        height: 150px;
+        font-size: 14px;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.2s ease;
+      }
+
+      .CodeMirror-focused {
+        border-color: var(--primary-color);
+        outline: 0;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+      }
+
+      .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        padding: 0.625rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .btn-primary:hover {
+        background-color: var(--primary-hover);
+        border-color: var(--primary-hover);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .btn-outline-secondary {
+        border-color: var(--border-color);
+        color: var(--text-secondary);
+        padding: 0.625rem 1.25rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+      }
+
+      .btn-outline-secondary:hover {
+        background-color: var(--main-bg);
+        border-color: var(--text-secondary);
+        color: var(--text-primary);
+      }
+
+      .results-container {
+        flex: 1;
+        overflow: auto;
+        padding: 1.5rem;
+        background-color: var(--main-bg);
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+        max-width: 100%;
+        border: 2px solid var(--border-color);
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        background-color: var(--card-bg);
+        box-shadow: var(--shadow-md);
+      }
+
+      .table-wrapper table {
+        margin-bottom: 0;
+      }
+
+      .table {
+        color: var(--text-primary);
+      }
+
+      .table thead {
+        background-color: var(--sidebar-bg);
+        color: var(--sidebar-text);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+      }
+
+      .table thead th {
+        padding: 1rem 0.75rem;
+        border-bottom: 2px solid #334155;
+      }
+
+      .table tbody tr {
+        transition: all 0.15s ease;
+      }
+
+      .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f8fafc;
+      }
+
+      .table-hover tbody tr:hover {
+        background-color: #e0f2fe;
+        transform: scale(1.001);
+      }
+
+      .table tbody td {
+        padding: 0.875rem 0.75rem;
+        border-color: var(--border-color);
+        font-size: 0.875rem;
+      }
+
+      .pagination-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+        background-color: var(--card-bg);
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow-sm);
+        border: 2px solid var(--border-color);
+      }
+
+      .pagination-info {
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 0.875rem;
+      }
+
+      .pagination-buttons {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .pagination-buttons .btn {
+        padding: 0.5rem 0.75rem;
+        border-width: 2px;
+      }
+
+      .rows-per-page {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .rows-per-page label {
+        font-weight: 500;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin: 0;
+      }
+
+      .rows-per-page select {
+        width: auto;
+        border: 2px solid var(--border-color);
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        font-weight: 500;
+      }
+
+      .table-sidebar {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .table-sidebar li {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #334155;
+        color: var(--sidebar-text);
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .table-sidebar li i {
+        color: #94a3b8;
+        width: 16px;
+      }
+
+      .table-sidebar li:hover {
+        background-color: var(--sidebar-hover);
+        padding-left: 1.25rem;
+        color: #f1f5f9;
+      }
+
+      .table-sidebar li.active {
+        background-color: var(--primary-color);
+        color: white;
+        border-left: 4px solid #60a5fa;
+        font-weight: 600;
+      }
+
+      .table-sidebar li.active i {
+        color: #93c5fd;
+      }
+
+      .error-message {
+        background-color: var(--error-bg);
+        border: 2px solid var(--error-border);
+        border-left: 4px solid #dc2626;
+        color: var(--error-text);
+        padding: 1.25rem;
+        border-radius: 0.5rem;
+        box-shadow: var(--shadow-sm);
+        font-size: 0.875rem;
+      }
+
+      .error-message i {
+        margin-right: 0.5rem;
+      }
+
+      .success-message {
+        background-color: var(--success-bg);
+        border: 2px solid var(--success-border);
+        border-left: 4px solid #16a34a;
+        color: var(--success-text);
+        padding: 1.25rem;
+        border-radius: 0.5rem;
+        box-shadow: var(--shadow-sm);
+        font-size: 0.875rem;
+      }
+
+      .success-message i {
+        margin-right: 0.5rem;
+      }
+
+      /* Database cards */
+      .card {
+        border: 2px solid var(--border-color);
+        border-radius: 0.5rem;
+        transition: all 0.2s ease;
+        box-shadow: var(--shadow-sm);
+        background-color: var(--card-bg);
+      }
+
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-color);
+      }
+
+      .card-title {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      .card-text {
+        color: var(--text-secondary);
+      }
+
+      /* Empty state styling */
+      .text-muted.text-center {
+        color: var(--text-secondary) !important;
+      }
+
+      .text-muted.text-center i {
+        color: var(--border-color);
+      }
+
+      /* Alert styling */
+      .alert-warning {
+        background-color: #fef3c7;
+        border: 2px solid #fde047;
+        border-left: 4px solid #eab308;
+        color: #713f12;
+        border-radius: 0.5rem;
+      }
+
+      .alert-warning .alert-heading {
+        font-weight: 600;
+        color: #713f12;
+      }
+
+      .alert-warning pre {
+        background-color: #fefce8;
+        border: 1px solid #fde047;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        color: #854d0e;
+      }
+
+      /* Scrollbar styling */
+      .sidebar::-webkit-scrollbar,
+      .results-container::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .sidebar::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 4px;
+      }
+
+      .sidebar::-webkit-scrollbar-thumb:hover {
+        background: #64748b;
+      }
+
+      .results-container::-webkit-scrollbar-track {
+        background: #f1f5f9;
+      }
+
+      .results-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+
+      .results-container::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+    </style>
+
+    <!-- CodeMirror JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/sql/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/sql-hint.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css">
+
+    <script type="module">
+      import { Application, Controller } from "https://unpkg.com/@hotwired/stimulus/dist/stimulus.js"
+
+      // Query Executor Controller
+      class QueryExecutorController extends Controller {
+        static targets = ["queryInput"]
+
+        initialize() {
+          this.currentPage = 1
+          this.rowsPerPage = 25
+          this.allData = null
+        }
+
+        connect() {
+          // Initialize CodeMirror on the textarea
+          if (this.hasQueryInputTarget && !this.editor) {
+            this.editor = CodeMirror.fromTextArea(this.queryInputTarget, {
+              mode: 'text/x-sql',
+              theme: 'default',
+              lineNumbers: true,
+              matchBrackets: true,
+              autoCloseBrackets: true,
+              lineWrapping: true,
+              extraKeys: {
+                "Ctrl-Space": "autocomplete",
+                "Cmd-Enter": () => this.executeQuery(),
+                "Ctrl-Enter": () => this.executeQuery()
+              }
+            })
+
+            // Set initial value
+            this.editor.setValue(this.queryInputTarget.value || "SELECT * FROM sqlite_master WHERE type='table';")
+
+            // Store editor reference globally for table selector
+            window.sqlEditor = this.editor
+          }
+        }
+
+        execute(event) {
+          event.preventDefault()
+          this.executeQuery()
+        }
+
+        executeQuery() {
+          const form = this.element
+          const query = this.editor ? this.editor.getValue() : this.queryInputTarget.value
+          const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+
+          // Create FormData and add the query
+          const formData = new FormData()
+          formData.append('query', query)
+
+          fetch(form.action, {
+            method: form.method || 'POST',
+            body: formData,
+            headers: {
+              'X-CSRF-Token': csrfToken,
+              'Accept': 'application/json'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            console.log("Query response:", data)
+            this.allData = data
+            this.currentPage = 1
+            this.displayResults()
+          })
+          .catch(error => {
+            console.error("Query error:", error)
+            this.displayError(error.message || "An error occurred")
+          })
+        }
+
+        displayResults() {
+          const resultsDiv = document.getElementById("query-results")
+
+          if (!this.allData) return
+
+          if (this.allData.error) {
+            this.displayError(this.allData.error)
+            return
+          }
+
+          if (this.allData.columns && this.allData.columns.length > 0) {
+            const totalRows = this.allData.rows.length
+            const totalPages = Math.ceil(totalRows / this.rowsPerPage)
+            const startIndex = (this.currentPage - 1) * this.rowsPerPage
+            const endIndex = Math.min(startIndex + this.rowsPerPage, totalRows)
+            const pageRows = this.allData.rows.slice(startIndex, endIndex)
+
+            let html = `
+              <div class="pagination-controls">
+                <div class="rows-per-page">
+                  <label for="rows-per-page">Rows per page:</label>
+                  <select id="rows-per-page" class="form-select form-select-sm" onchange="window.queryController.changeRowsPerPage(this.value)">
+                    <option value="10" ${this.rowsPerPage == 10 ? 'selected' : ''}>10</option>
+                    <option value="25" ${this.rowsPerPage == 25 ? 'selected' : ''}>25</option>
+                    <option value="50" ${this.rowsPerPage == 50 ? 'selected' : ''}>50</option>
+                    <option value="100" ${this.rowsPerPage == 100 ? 'selected' : ''}>100</option>
+                    <option value="500" ${this.rowsPerPage == 500 ? 'selected' : ''}>500</option>
+                  </select>
+                </div>
+                <div class="pagination-info">
+                  Showing ${startIndex + 1} to ${endIndex} of ${totalRows} rows
+                </div>
+                <div class="pagination-buttons">
+                  <button class="btn btn-sm btn-outline-secondary"
+                          onclick="window.queryController.firstPage()"
+                          ${this.currentPage === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-angle-double-left"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary"
+                          onclick="window.queryController.previousPage()"
+                          ${this.currentPage === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-angle-left"></i>
+                  </button>
+                  <span class="px-3">Page ${this.currentPage} of ${totalPages}</span>
+                  <button class="btn btn-sm btn-outline-secondary"
+                          onclick="window.queryController.nextPage()"
+                          ${this.currentPage === totalPages ? 'disabled' : ''}>
+                    <i class="fas fa-angle-right"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary"
+                          onclick="window.queryController.lastPage()"
+                          ${this.currentPage === totalPages ? 'disabled' : ''}>
+                    <i class="fas fa-angle-double-right"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="table-wrapper">
+                <table class="table table-striped table-hover table-bordered table-sm">
+                  <thead class="table-dark sticky-top">
+                    <tr>
+                      ${this.allData.columns.map(col => `<th>${this.escapeHtml(col)}</th>`).join('')}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${pageRows.map(row =>
+                      `<tr>${row.map(val => `<td>${this.escapeHtml(String(val || ''))}</td>`).join('')}</tr>`
+                    ).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `
+            resultsDiv.innerHTML = html
+
+            // Store reference for pagination controls
+            window.queryController = this
+          } else if (this.allData.message) {
+            resultsDiv.innerHTML = `
+              <div class="success-message">
+                <i class="fas fa-check-circle"></i> ${this.escapeHtml(this.allData.message)}
+              </div>
+            `
+          } else {
+            resultsDiv.innerHTML = `
+              <div class="text-muted text-center py-5">
+                <p>No results returned</p>
+              </div>
+            `
+          }
+        }
+
+        changeRowsPerPage(value) {
+          this.rowsPerPage = parseInt(value)
+          this.currentPage = 1
+          this.displayResults()
+        }
+
+        firstPage() {
+          this.currentPage = 1
+          this.displayResults()
+        }
+
+        previousPage() {
+          if (this.currentPage > 1) {
+            this.currentPage--
+            this.displayResults()
+          }
+        }
+
+        nextPage() {
+          const totalPages = Math.ceil(this.allData.rows.length / this.rowsPerPage)
+          if (this.currentPage < totalPages) {
+            this.currentPage++
+            this.displayResults()
+          }
+        }
+
+        lastPage() {
+          this.currentPage = Math.ceil(this.allData.rows.length / this.rowsPerPage)
+          this.displayResults()
+        }
+
+        displayError(error) {
+          const resultsDiv = document.getElementById("query-results")
+          resultsDiv.innerHTML = `
+            <div class="error-message">
+              <i class="fas fa-exclamation-circle"></i> <strong>Error:</strong> ${this.escapeHtml(error)}
+            </div>
+          `
+        }
+
+        escapeHtml(text) {
+          const div = document.createElement('div')
+          div.textContent = text
+          return div.innerHTML
+        }
+
+        clear() {
+          if (this.editor) {
+            this.editor.setValue("")
+            this.editor.focus()
+          } else {
+            this.queryInputTarget.value = ""
+            this.queryInputTarget.focus()
+          }
+        }
+      }
+
+      // Table Selector Controller
+      class TableSelectorController extends Controller {
+        static targets = ["tableItem"]
+
+        selectTable(event) {
+          const tableName = event.currentTarget.dataset.tableName
+
+          // Remove active class from all items
+          this.tableItemTargets.forEach(item => {
+            item.classList.remove("active")
+          })
+
+          // Add active class to clicked item
+          event.currentTarget.classList.add("active")
+
+          // Update query in CodeMirror editor
+          if (window.sqlEditor) {
+            window.sqlEditor.setValue(`SELECT * FROM ${tableName} LIMIT 100;`)
+          } else {
+            // Fallback to regular textarea
+            const queryInput = document.getElementById("query")
+            if (queryInput) {
+              queryInput.value = `SELECT * FROM ${tableName} LIMIT 100;`
+            }
+          }
+
+          // Trigger the query execution
+          const form = document.querySelector('[data-controller="query-executor"]')
+          if (form) {
+            const submitButton = form.querySelector('button[type="submit"]')
+            if (submitButton) {
+              submitButton.click()
+            } else {
+              form.requestSubmit()
+            }
+          }
+        }
+      }
+
+      // Initialize Stimulus
+      window.Stimulus = Application.start()
+      Stimulus.register("query-executor", QueryExecutorController)
+      Stimulus.register("table-selector", TableSelectorController)
+    </script>
+  </head>
+
+  <body>
+    <div class="sqlite-dashboard-container">
+      <%= yield %>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+<div class="container mt-5">
+  <h1 class="mb-4">Select a Database</h1>
+
+  <div class="row">
+    <% @databases.each do |database| %>
+      <div class="col-md-4 mb-3">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title"><%= database[:name] %></h5>
+            <p class="card-text text-muted small"><%= database[:path] %></p>
+            <%= link_to "Open Dashboard", database_path(database[:id]), class: "btn btn-primary" %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @databases.empty? %>
+    <div class="alert alert-warning">
+      <h4 class="alert-heading">No databases configured</h4>
+      <p>Please configure databases in your application's initializer:</p>
+      <pre><code>SqliteDashboard.configure do |config|
+  config.db_files = [
+    { name: "Development", path: Rails.root.join("db/development.sqlite3").to_s },
+    { name: "Production", path: Rails.root.join("db/production.sqlite3").to_s }
+  ]
+end</code></pre>
+    </div>
+  <% end %>
+</div>

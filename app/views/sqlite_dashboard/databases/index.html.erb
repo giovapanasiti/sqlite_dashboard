@@ -1,30 +1,97 @@
-<div class="container mt-5">
-  <h1 class="mb-4">Select a Database</h1>
-
-  <div class="row">
-    <% @databases.each do |database| %>
-      <div class="col-md-4 mb-3">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title"><%= database[:name] %></h5>
-            <p class="card-text text-muted small"><%= database[:path] %></p>
-            <%= link_to "Open Dashboard", database_path(database[:id]), class: "btn btn-primary" %>
+<div class="databases-index-page">
+  <div class="row g-0" style="min-height: 100vh;">
+    <!-- Sidebar -->
+    <div class="col-md-2 sidebar index-sidebar">
+      <div class="p-3">
+        <div class="sidebar-brand">
+          <i class="fas fa-database"></i>
+          <div>
+            <h6 class="mb-0">SQLite Dashboard</h6>
+            <small class="text-muted">Database Manager</small>
           </div>
         </div>
-      </div>
-    <% end %>
-  </div>
 
-  <% if @databases.empty? %>
-    <div class="alert alert-warning">
-      <h4 class="alert-heading">No databases configured</h4>
-      <p>Please configure databases in your application's initializer:</p>
-      <pre><code>SqliteDashboard.configure do |config|
+        <div class="sidebar-stats mt-4">
+          <div class="stat-item">
+            <i class="fas fa-server"></i>
+            <div>
+              <div class="stat-value"><%= @databases.count %></div>
+              <div class="stat-label">Database<%= @databases.count != 1 ? 's' : '' %></div>
+            </div>
+          </div>
+        </div>
+
+        <% if @databases.any? %>
+          <div class="mt-4">
+            <h6 class="text-muted mb-2" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Quick Access</h6>
+            <ul class="database-list">
+              <% @databases.each do |database| %>
+                <li>
+                  <%= link_to database_path(database[:id]), class: "database-link" do %>
+                    <i class="fas fa-database"></i>
+                    <span><%= database[:name] %></span>
+                    <i class="fas fa-chevron-right ms-auto"></i>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="col-md-10" style="background-color: var(--main-bg); min-height: 100vh;">
+      <div class="index-main-content">
+        <div class="content-header">
+          <h1 class="page-title">
+            <i class="fas fa-server"></i>
+            Your Databases
+          </h1>
+          <p class="page-subtitle">Select a database to explore and manage</p>
+        </div>
+
+        <% if @databases.any? %>
+          <div class="databases-grid">
+            <% @databases.each do |database| %>
+              <div class="database-card-modern">
+                <div class="database-card-icon">
+                  <i class="fas fa-database"></i>
+                </div>
+                <div class="database-card-content">
+                  <h3 class="database-card-title"><%= database[:name] %></h3>
+                  <p class="database-card-path">
+                    <i class="fas fa-folder-open"></i>
+                    <%= database[:path] %>
+                  </p>
+                </div>
+                <div class="database-card-actions">
+                  <%= link_to database_path(database[:id]), class: "btn btn-primary btn-card-action" do %>
+                    <i class="fas fa-arrow-right"></i>
+                    Open Dashboard
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="empty-state-modern">
+            <div class="empty-state-icon">
+              <i class="fas fa-database"></i>
+            </div>
+            <h3>No Databases Configured</h3>
+            <p>Configure databases in your application's initializer to get started</p>
+            <div class="empty-state-code">
+              <pre><code>SqliteDashboard.configure do |config|
   config.db_files = [
     { name: "Development", path: Rails.root.join("db/development.sqlite3").to_s },
     { name: "Production", path: Rails.root.join("db/production.sqlite3").to_s }
   ]
 end</code></pre>
+            </div>
+          </div>
+        <% end %>
+      </div>
     </div>
-  <% end %>
+  </div>
 </div>

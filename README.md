@@ -422,7 +422,7 @@ The gem is available as open source under the terms of the [MIT License](https:/
 
 ## Credits
 
-Created by [Your Name](https://github.com/yourusername)
+Created by [Giovanni Panasiti](https://github.com/giovapanasiti)
 
 Special thanks to:
 - [CodeMirror](https://codemirror.net/) for the SQL editor
@@ -431,9 +431,7 @@ Special thanks to:
 
 ## Support
 
-- 🐛 [Report bugs](https://github.com/yourusername/sqlite_dashboard/issues)
-- 💡 [Request features](https://github.com/yourusername/sqlite_dashboard/issues)
-- 📧 [Email support](mailto:your.email@example.com)
+- 📧 [Email support](mailto:giova.panasiti@hey.com)
 
 ---
 

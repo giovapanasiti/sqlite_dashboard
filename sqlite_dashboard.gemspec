@@ -43,6 +43,7 @@ Gem::Specification.new do |spec|
   # Runtime dependencies
   spec.add_dependency "rails", ">= 7.0.0"
   spec.add_dependency "sqlite3", ">= 1.4"
+  spec.add_dependency "csv", ">= 3.0"
 
   # Development dependencies
   spec.add_development_dependency "bundler", ">= 2.0"

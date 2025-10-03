@@ -5,7 +5,13 @@
 
 A beautiful, feature-rich SQLite database browser and query interface for Rails applications. Mount it as an engine in your Rails app to inspect and query your SQLite databases through a clean, modern interface.
 
-![SQLite Dashboard Screenshot](https://via.placeholder.com/800x400)
+## Screenshots
+
+### Database Selection
+![Database Dashboard](screenshots/dashboard.png)
+
+### Query Interface & Results
+![Query Details](screenshots/details.png)
 
 ## Features
 
@@ -151,7 +157,26 @@ http://localhost:3000/sqlite_dashboard
 
 ⚠️ **Warning**: This gem provides direct SQL access to your databases.
 
-### Recommended Security Measures:
+### Built-in Security Features
+
+1. **Read-Only Mode by Default** - DML operations are disabled by default:
+
+```ruby
+# config/initializers/sqlite_dashboard.rb
+SqliteDashboard.configure do |config|
+  config.allow_dml = false  # Default: prevents INSERT, UPDATE, DELETE, CREATE, TRUNCATE
+end
+```
+
+2. **Always Forbidden Operations** - DROP and ALTER are always blocked, even when `allow_dml = true`:
+
+```ruby
+# These are NEVER allowed for safety:
+# - DROP TABLE/INDEX/VIEW
+# - ALTER TABLE
+```
+
+### Recommended Security Measures
 
 1. **Development Only** - Only mount in development environment:
 
@@ -162,7 +187,7 @@ if Rails.env.development?
 end
 ```
 
-2. **Authentication** - Add authentication with Devise or similar:
+2. **Authentication with Devise** - Add authentication for production use:
 
 ```ruby
 # config/routes.rb
@@ -171,25 +196,23 @@ authenticate :user, ->(user) { user.admin? } do
 end
 ```
 
-3. **Basic Auth** - Quick protection with HTTP Basic Auth:
+3. **HTTP Basic Auth** - Quick protection with HTTP Basic Auth:
 
 ```ruby
-# config/initializers/sqlite_dashboard.rb
+# config/initializers/sqlite_dashboard.rb or config/application.rb
 SqliteDashboard::Engine.middleware.use Rack::Auth::Basic do |username, password|
-  username == ENV['DASHBOARD_USER'] && password == ENV['DASHBOARD_PASS']
+  ActiveSupport::SecurityUtils.secure_compare(username, ENV['DASHBOARD_USER']) &
+  ActiveSupport::SecurityUtils.secure_compare(password, ENV['DASHBOARD_PASS'])
 end
 ```
 
-4. **Read-Only Mode** - Configure read-only database connections:
+4. **Enable DML Only When Needed** - Only allow write operations in trusted environments:
 
 ```ruby
-config.db_files = [
-  {
-    name: "Production (Read-Only)",
-    path: Rails.root.join("db/production.sqlite3").to_s,
-    readonly: true  # Coming in v2.0
-  }
-]
+SqliteDashboard.configure do |config|
+  # Use environment variables or Rails.env checks
+  config.allow_dml = Rails.env.development? || Rails.env.test?
+end
 ```
 
 ## Customization
@@ -374,13 +397,24 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/yourus
 
 ## Roadmap
 
-- [x] **v1.1** - Export results to CSV/JSON
-- [ ] **v1.2** - Query history and saved queries
-- [ ] **v1.3** - Database schema visualization
-- [ ] **v2.0** - Read-only mode enforcement
-- [ ] **v2.1** - Dark mode theme
-- [ ] **v2.2** - Multi-query execution
-- [ ] **v2.3** - Query performance analytics
+### Completed ✅
+- [x] **v1.0** - Core SQLite browser with modern UI
+- [x] **v1.0** - SQL syntax highlighting with CodeMirror
+- [x] **v1.0** - Client-side pagination
+- [x] **v1.0** - Auto-detection from database.yml
+- [x] **v1.0** - CSV & JSON export with options
+- [x] **v1.0** - Read-only mode with DML controls
+- [x] **v1.0** - Dark sidebar theme
+- [x] **v1.0** - Rails generator for easy installation
+
+### Planned 🚀
+- [ ] **v1.1** - Query history and saved queries
+- [ ] **v1.2** - Database schema visualization
+- [ ] **v1.3** - Table relationships diagram
+- [ ] **v1.4** - Query performance analytics
+- [ ] **v2.0** - Multi-query execution
+- [ ] **v2.1** - Full dark mode theme toggle
+- [ ] **v2.2** - SQL query builder UI
 
 ## License
 

@@ -9,14 +9,18 @@ A beautiful, feature-rich SQLite database browser and query interface for Rails 
 
 ## Features
 
-- 🎨 **Modern UI** with Bootstrap 5 and responsive design
+- 🎨 **Modern UI** with dark sidebar theme and responsive design
 - 🔍 **Multiple Database Support** - Configure and switch between multiple SQLite databases
+- 🗄️ **Auto-Detection** - Automatically discovers SQLite databases from `config/database.yml`
 - ✨ **SQL Syntax Highlighting** - CodeMirror editor with SQL syntax highlighting and autocomplete
-- 📊 **Interactive Query Results** - Paginated, sortable results with horizontal scrolling
+- 📊 **Interactive Query Results** - Client-side pagination with customizable rows per page
+- 💾 **Export Functionality** - Export results to CSV or JSON with custom formatting options
 - 🎯 **Quick Table Browse** - Click any table name to instantly query it
 - ⚡ **Fast & Lightweight** - No build tools required, works with Rails importmap
-- 🔐 **Safe for Development** - Read-only access to prevent accidental data modification
+- 🔒 **Read-Only Mode** - Prevents accidental data modification (configurable)
+- 🚫 **Security Controls** - DROP and ALTER operations always forbidden
 - ⌨️ **Keyboard Shortcuts** - `Ctrl/Cmd + Enter` to execute queries
+- 📱 **Fully Responsive** - Works beautifully on desktop and mobile devices
 
 ## Installation
 
@@ -29,10 +33,32 @@ gem 'sqlite_dashboard'
 And then execute:
 
 ```bash
-$ bundle install
+bundle install
 ```
 
-## Configuration
+## Quick Start (Recommended)
+
+The easiest way to install SQLite Dashboard is using the built-in generator:
+
+```bash
+rails generate sqlite_dashboard:install
+```
+
+This will:
+- ✅ Create an initializer at `config/initializers/sqlite_dashboard.rb`
+- ✅ Mount the engine in your routes at `/sqlite_dashboard`
+- ✅ Auto-detect your SQLite databases
+- ✅ Display helpful setup instructions
+
+Then start your Rails server and visit:
+
+```
+http://localhost:3000/sqlite_dashboard
+```
+
+## Manual Configuration
+
+If you prefer to set up manually:
 
 ### Step 1: Mount the Engine
 
@@ -52,19 +78,23 @@ Create an initializer `config/initializers/sqlite_dashboard.rb`:
 
 ```ruby
 SqliteDashboard.configure do |config|
+  # Option 1: Explicitly define databases
   config.db_files = [
     {
       name: "Development",
-      path: Rails.root.join("storage", "development.sqlite3").to_s
+      path: Rails.root.join("db", "development.sqlite3").to_s
     },
     {
       name: "Test",
-      path: Rails.root.join("storage", "test.sqlite3").to_s
+      path: Rails.root.join("db", "test.sqlite3").to_s
     }
   ]
 
-  # Or add databases dynamically:
-  # config.add_database("Custom DB", "/path/to/database.sqlite3")
+  # Option 2: Or leave empty to auto-detect from database.yml
+  # (Automatically loads SQLite databases for current environment)
+
+  # Security: Control write operations (default: false)
+  config.allow_dml = false  # Read-only mode
 end
 ```
 
@@ -95,6 +125,21 @@ http://localhost:3000/sqlite_dashboard
 - Adjust rows per page (10, 25, 50, 100, 500)
 - Navigate through pages with First, Previous, Next, Last buttons
 - See current position (e.g., "Showing 1 to 25 of 150 rows")
+- Client-side pagination for instant navigation
+
+### Export Query Results
+
+**CSV Export:**
+- Choose separator: comma, semicolon, tab, or pipe
+- Option to include/exclude headers as first row
+- Exports all query results (not just paginated view)
+
+**JSON Export:**
+- Two format options:
+  - Array of objects: `[{"col1": "val1", "col2": "val2"}, ...]`
+  - Object with columns & rows: `{"columns": [...], "rows": [...]}`
+- Pretty print option for formatted/readable JSON
+- Timestamped filenames for easy organization
 
 ### Keyboard Shortcuts
 

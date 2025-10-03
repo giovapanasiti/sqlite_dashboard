@@ -1,6 +1,8 @@
 ===============================================================================
 
-SQLite Dashboard has been installed successfully!
+  ✨ SQLite Dashboard has been installed successfully! ✨
+
+===============================================================================
 
 Next Steps:
 -----------
@@ -8,7 +10,7 @@ Next Steps:
 1. Review the configuration in:
    config/initializers/sqlite_dashboard.rb
 
-2. Update the database paths to match your SQLite files
+2. (Optional) Update database paths or use auto-detection from database.yml
 
 3. Start your Rails server:
    rails server
@@ -16,35 +18,64 @@ Next Steps:
 4. Visit the dashboard at:
    http://localhost:3000/sqlite_dashboard
 
-Security Warning:
------------------
-SQLite Dashboard provides direct SQL access to your databases.
+Features:
+---------
+✨ SQL syntax highlighting with CodeMirror
+📊 Paginated query results
+🔍 Quick table browsing with sidebar navigation
+💾 Export to CSV and JSON with custom options
+⌨️  Keyboard shortcuts (Ctrl/Cmd + Enter to execute)
+🎨 Modern, responsive UI with dark sidebar theme
+🔒 Read-only mode by default (configurable)
+🗄️  Auto-detects databases from config/database.yml
+⚡ Client-side pagination for fast browsing
 
-For production or shared environments, add authentication:
+Security Configuration:
+-----------------------
+By default, SQLite Dashboard runs in READ-ONLY mode.
 
-In config/routes.rb, replace the mount line with:
+To enable write operations, set in the initializer:
+  config.allow_dml = true
+
+Note: DROP and ALTER are always forbidden for safety.
+
+Production Security:
+--------------------
+IMPORTANT: Add authentication before deploying to production!
+
+Option 1 - Devise/Clearance authentication:
+  In config/routes.rb, replace the mount line with:
 
   authenticate :user, ->(user) { user.admin? } do
     mount SqliteDashboard::Engine => "/sqlite_dashboard"
   end
 
-Or use HTTP Basic Auth by adding to the initializer:
+Option 2 - HTTP Basic Auth:
+  Add to config/application.rb or the initializer:
 
   SqliteDashboard::Engine.middleware.use Rack::Auth::Basic do |user, pass|
-    user == ENV['DASHBOARD_USER'] && pass == ENV['DASHBOARD_PASS']
+    ActiveSupport::SecurityUtils.secure_compare(user, ENV['DASHBOARD_USER']) &
+    ActiveSupport::SecurityUtils.secure_compare(pass, ENV['DASHBOARD_PASS'])
   end
 
-Features:
----------
-✨ SQL syntax highlighting with autocomplete
-📊 Paginated query results
-🔍 Quick table browsing
-⌨️  Keyboard shortcuts (Ctrl/Cmd + Enter to execute)
-📱 Responsive design
+Export Features:
+----------------
+📄 CSV Export: Choose separator (comma, semicolon, tab, pipe)
+   - Optional headers row
+   - Exports all query results (not just paginated view)
+
+🔧 JSON Export: Two format options
+   - Array of objects: [{"col1": "val1"}, ...]
+   - Object with columns & rows: {"columns": [...], "rows": [...]}
+   - Pretty print option for readable formatting
 
 Documentation:
 --------------
-https://github.com/sqlite-dashboard/sqlite_dashboard
+https://github.com/giovapanasiti/sqlite_dashboard
+
+Support:
+--------
+Report issues: https://github.com/giovapanasiti/sqlite_dashboard/issues
 
 Enjoy exploring your SQLite databases! 🎉
 

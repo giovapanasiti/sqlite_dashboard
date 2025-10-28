@@ -44,10 +44,19 @@
     <div class="col-md-10" style="background-color: var(--main-bg); min-height: 100vh;">
       <div class="index-main-content">
         <div class="content-header">
-          <h1 class="page-title">
-            <i class="fas fa-server"></i>
-            Your Databases
-          </h1>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h1 class="page-title mb-0">
+                <i class="fas fa-server"></i>
+                Your Databases
+              </h1>
+            </div>
+            <div>
+              <%= link_to worksheet_path, class: "btn btn-success" do %>
+                <i class="fas fa-file-code"></i> SQL Worksheet
+              <% end %>
+            </div>
+          </div>
           <p class="page-subtitle">Select a database to explore and manage</p>
         </div>
 
@@ -74,6 +83,46 @@
               </div>
             <% end %>
           </div>
+
+          <!-- Saved Queries Section -->
+          <% if @saved_queries.any? %>
+            <div class="mt-5">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4">
+                  <i class="fas fa-bookmark"></i> Recent Saved Queries
+                </h2>
+                <%= link_to worksheet_path, class: "btn btn-sm btn-outline-primary" do %>
+                  <i class="fas fa-eye"></i> View All
+                <% end %>
+              </div>
+              <div class="saved-queries-grid">
+                <% @saved_queries.each do |query| %>
+                  <div class="saved-query-card">
+                    <div class="saved-query-header">
+                      <h5 class="saved-query-title">
+                        <i class="fas fa-code"></i> <%= query.name %>
+                      </h5>
+                      <% if query.database_name.present? %>
+                        <span class="badge bg-info"><%= query.database_name %></span>
+                      <% end %>
+                    </div>
+                    <p class="saved-query-description"><%= query.description %></p>
+                    <div class="saved-query-sql">
+                      <code><%= truncate(query.query, length: 100) %></code>
+                    </div>
+                    <div class="saved-query-meta">
+                      <small class="text-muted">
+                        <i class="fas fa-clock"></i> <%= time_ago_in_words(query.created_at) %> ago
+                      </small>
+                      <%= link_to worksheet_path, class: "btn btn-sm btn-outline-success" do %>
+                        <i class="fas fa-play"></i> Load in Worksheet
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
         <% else %>
           <div class="empty-state-modern">
             <div class="empty-state-icon">

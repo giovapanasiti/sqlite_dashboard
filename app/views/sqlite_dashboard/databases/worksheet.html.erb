@@ -1,0 +1,111 @@
+<div class="row g-0" style="height: 100vh;" data-controller="saved-queries">
+  <!-- Sidebar with saved queries -->
+  <div class="col-md-2 sidebar">
+    <div class="p-3">
+      <h6 class="mb-3">
+        <i class="fas fa-file-code"></i> SQL Worksheet
+      </h6>
+      <%= link_to "← Back to Databases", databases_path, class: "btn btn-sm btn-outline-secondary mb-3" %>
+
+      <h6 class="mb-2">Saved Queries</h6>
+      <div id="saved-queries-list" data-saved-queries-target="list">
+        <div class="text-muted small text-center py-3">
+          <i class="fas fa-spinner fa-spin"></i> Loading...
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-sm btn-primary w-100 mt-3" data-action="click->saved-queries#refresh">
+        <i class="fas fa-sync-alt"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Main content area -->
+  <div class="col-md-10 main-content">
+    <!-- Database Selector -->
+    <div class="mb-3 px-4 pt-2">
+      <label for="database-selector" class="form-label fw-bold">Select Database</label>
+      <select id="database-selector" class="form-select" data-saved-queries-target="databaseSelector">
+        <option value="">-- Select a database --</option>
+        <% @databases.each do |db| %>
+          <option value="<%= db[:id] %>"><%= db[:name] %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <!-- Query Console -->
+    <div class="query-console">
+      <div class="mb-3">
+        <label for="worksheet-query" class="form-label fw-bold">SQL Query</label>
+        <textarea id="worksheet-query"
+                  class="form-control query-textarea"
+                  data-saved-queries-target="queryInput"
+                  placeholder="Enter your SQL query here..."></textarea>
+      </div>
+      <div class="d-flex gap-2 mb-2">
+        <button type="button" class="btn btn-primary" data-action="click->saved-queries#execute">
+          <i class="fas fa-play"></i> Execute Query
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-action="click->saved-queries#clear">
+          <i class="fas fa-eraser"></i> Clear
+        </button>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#saveQueryModal">
+          <i class="fas fa-save"></i> Save Query
+        </button>
+        <button type="button" class="btn btn-outline-info" data-action="click->saved-queries#exportCSV">
+          <i class="fas fa-file-csv"></i> Export CSV
+        </button>
+        <button type="button" class="btn btn-outline-info" data-action="click->saved-queries#exportJSON">
+          <i class="fas fa-file-code"></i> Export JSON
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Container -->
+    <div class="results-container" id="worksheet-results">
+      <div class="text-muted text-center py-5">
+        <i class="fas fa-database fa-3x mb-3"></i>
+        <p>Select a database and execute a query to see results</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Save Query Modal -->
+<div class="modal fade" id="saveQueryModal" tabindex="-1" aria-labelledby="saveQueryModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="saveQueryModalLabel">Save Query</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="query-name" class="form-label">Query Name *</label>
+          <input type="text" class="form-control" id="query-name" data-saved-queries-target="queryName" required>
+        </div>
+        <div class="mb-3">
+          <label for="query-description" class="form-label">Description *</label>
+          <textarea class="form-control" id="query-description" rows="2" data-saved-queries-target="queryDescription" required></textarea>
+        </div>
+        <div id="save-error" class="alert alert-danger d-none" data-saved-queries-target="saveError"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" data-action="click->saved-queries#saveQuery">
+          <i class="fas fa-save"></i> Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Initialize the saved queries controller when the page loads
+  document.addEventListener('turbo:load', () => {
+    const element = document.querySelector('[data-controller="saved-queries"]');
+    if (!element) {
+      document.body.setAttribute('data-controller', 'saved-queries');
+    }
+  });
+</script>

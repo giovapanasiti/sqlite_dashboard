@@ -21,6 +21,10 @@ module SqliteDashboard
         route route_content.strip
       end
 
+      def copy_migrations
+        rake "sqlite_dashboard:install:migrations"
+      end
+
       def display_readme
         readme "README" if behavior == :invoke
       end

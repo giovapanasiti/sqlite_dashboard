@@ -5,13 +5,20 @@ require 'json'
 module SqliteDashboard
   class DatabasesController < ApplicationController
     before_action :set_database, only: [:show, :execute_query, :export_csv, :export_json, :tables, :table_schema]
+    before_action :set_saved_query, only: [:destroy_saved_query]
 
     def index
       @databases = SqliteDashboard.configuration.databases
+      @saved_queries = SavedQuery.recent.limit(10)
     end
 
     def show
       @tables = fetch_tables
+    end
+
+    def worksheet
+      @databases = SqliteDashboard.configuration.databases
+      @saved_queries = SavedQuery.recent.limit(20)
     end
 
     def execute_query
@@ -166,7 +173,51 @@ module SqliteDashboard
       end
     end
 
+    # Saved Queries actions
+    def saved_queries
+      @saved_queries = SavedQuery.recent
+      database_name = params[:database_name]
+      @saved_queries = @saved_queries.for_database(database_name) if database_name.present?
+
+      render json: @saved_queries
+    end
+
+    def create_saved_query
+      @saved_query = SavedQuery.new(saved_query_params)
+
+      if @saved_query.save
+        render json: @saved_query, status: :created
+      else
+        render json: { error: @saved_query.errors.full_messages.join(", ") }, status: :unprocessable_entity
+      end
+    end
+
+    def show_saved_query
+      @saved_query = SavedQuery.find(params[:id])
+      render json: @saved_query
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Saved query not found" }, status: :not_found
+    end
+
+    def destroy_saved_query
+      if @saved_query.destroy
+        render json: { message: "Query deleted successfully" }
+      else
+        render json: { error: "Failed to delete query" }, status: :unprocessable_entity
+      end
+    end
+
     private
+
+    def set_saved_query
+      @saved_query = SavedQuery.find(params[:id])
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: "Saved query not found" }, status: :not_found
+    end
+
+    def saved_query_params
+      params.require(:saved_query).permit(:name, :query, :database_name, :description)
+    end
 
     def set_database
       @database = SqliteDashboard.configuration.databases.find { |db| db[:id] == params[:id].to_i }

@@ -21,13 +21,12 @@
   </div>
 
   <!-- Main content area -->
-  <div class="col-md-10 main-content">
+  <div class="col-md-10 main-content" data-controller="query-executor" data-database-name="<%= @database[:name] %>">
     <!-- Query Console -->
     <div class="query-console">
       <%= form_with url: execute_query_database_path(@database[:id]),
                     method: :post,
                     data: {
-                      controller: "query-executor",
                       action: "submit->query-executor#execute"
                     } do |form| %>
         <div class="mb-3">
@@ -45,6 +44,12 @@
           <button type="button" class="btn btn-outline-secondary" data-action="click->query-executor#clear">
             <i class="fas fa-eraser"></i> Clear
           </button>
+          <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#saveQueryModal">
+            <i class="fas fa-save"></i> Save Query
+          </button>
+          <%= link_to worksheet_path, class: "btn btn-outline-info" do %>
+            <i class="fas fa-file-code"></i> SQL Worksheet
+          <% end %>
         </div>
       <% end %>
     </div>
@@ -54,6 +59,35 @@
       <div class="text-muted text-center py-5">
         <i class="fas fa-database fa-3x mb-3"></i>
         <p>Execute a query to see results</p>
+      </div>
+    </div>
+
+    <!-- Save Query Modal -->
+    <div class="modal fade" id="saveQueryModal" tabindex="-1" aria-labelledby="saveQueryModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="saveQueryModalLabel">Save Query</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="query-name" class="form-label">Query Name *</label>
+              <input type="text" class="form-control" id="query-name" data-query-executor-target="queryName" required>
+            </div>
+            <div class="mb-3">
+              <label for="query-description" class="form-label">Description *</label>
+              <textarea class="form-control" id="query-description" rows="2" data-query-executor-target="queryDescription" required></textarea>
+            </div>
+            <div id="save-error" class="alert alert-danger d-none" data-query-executor-target="saveError"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" data-action="click->query-executor#saveQuery">
+              <i class="fas fa-save"></i> Save
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
